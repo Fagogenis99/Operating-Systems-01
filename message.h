@@ -12,7 +12,7 @@
 #include <signal.h>
 #include <time.h>
 
-#define SHM_KEY 12345       // shared memory key
+#define SHM_KEY 2100199     // shared memory key
 #define MAX_MSGS 200        // max number of messages
 #define TEXT_SIZE 100       // max size of message text
 #define MAX_DIALOGS 10      // max number of dialog rooms
