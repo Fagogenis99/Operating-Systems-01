@@ -31,5 +31,32 @@ int main(int argc, char *argv[]){
         exit(1);
     }
 
+    struct shmid_ds shm_info;
+    shmctl(shmid, IPC_STAT, &shm_info);  // get shared memory info
+
+    if(shm_info.shm_nattch==1){  // if this is the first process to attach
+        // initialize shared memory
+        union semun arg;
+        arg.val = 1;  // binary semaphore initialized to 1
+        if(semctl(semid, 0, SETVAL, arg)==-1){
+            perror("semctl failed");
+            exit(1);
+        }
+        // clean everything
+        shm->latest_message_id = 0;
+        shm->total_users = 0; 
+        for(int i=0;i<MAX_DIALOGS;i++){
+            shm->dialogs[i].id = 0;   // mark all dialog slots as free
+            shm->dialogs[i].user_count = 0;
+        }
+        for(int i=0;i<MAX_MSGS;i++){
+            shm->msgs[i].is_free = 1; // mark all message slots as free
+            shm->msgs[i].readers_left = 0;
+        }
+    }else{
+        
+    }
+
+
     return 0;
 }
