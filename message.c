@@ -126,14 +126,24 @@ int main(int argc, char *argv[]){
                     if (shm->msgs[index].sender_pid != getppid()) {
                         printf("Dialog %d: %s\n", dialog_id, shm->msgs[index].text);
                     }
+
+                    shm->msgs[index].readers_left--;
                     if (strcmp(shm->msgs[index].text, "TERMINATE") == 0) {
+                        if (shm->msgs[index].readers_left <= 0){
+                            shm->msgs[index].is_free = 1; // mark as free
+                        }
+                        shm->dialogs[dialog_index].user_count--;
+                        if (shm->dialogs[dialog_index].user_count <= 0) { // if no users left, close dialog
+                            shm->dialogs[dialog_index].id = 0; 
+                            shm->dialogs[dialog_index].user_count = 0;
+                            printf("Dialog %d is now empty and terminated.\n", current_dialog_id);
+                        }
                         semop(semid, &unlock, 1);            // unlock before exiting
                         kill(getppid(), SIGKILL);
                         exit(0);
                     }
                     next_expected_id++;
 
-                    shm->msgs[index].readers_left--;
                     if (shm->msgs[index].readers_left <= 0){
                         shm->msgs[index].is_free = 1; // mark as free
                     }
@@ -143,7 +153,14 @@ int main(int argc, char *argv[]){
                     usleep(100000);                      // sleep before checking again
                 }
             }
-        }else{  //  parent | writer
+        }else{ //  parent | writer
+            char input[TEXT_SIZE];
+            while(1){
+
+
+                
+            }
+
 
         }
 
