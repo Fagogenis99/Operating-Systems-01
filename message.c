@@ -102,6 +102,51 @@ int main(int argc, char *argv[]){
             exit(1);
         }
 
+        //fork 
+        pid_t pid=fork();
+        if (pid<0){
+            perror("fork failed");
+            exit(1);
+        }
+        if (pid==0){ //  child | reader
+            while(1){
+                if (semop(semid, &lock, 1)==-1){ // lock semaphore
+                    perror("semop lock failed");
+                    exit(1);
+                }
+
+                int index=-1;
+                for (int i=0; i<MAX_MSGS; i++){ // find message with next_expected_id in the dialog
+                    if ((shm->msgs[i].id == next_expected_id) && (shm->msgs[i].dialog_id == dialog_id) && (shm->msgs[i].is_free == 0)){
+                        index=i;
+                        break;
+                    }
+                }
+                if (index!=-1){ // if found
+                    if (shm->msgs[index].sender_pid != getppid()) {
+                        printf("Dialog %d: %s\n", dialog_id, shm->msgs[index].text);
+                    }
+                    if (strcmp(shm->msgs[index].text, "TERMINATE") == 0) {
+                        semop(semid, &unlock, 1);            // unlock before exiting
+                        kill(getppid(), SIGKILL);
+                        exit(0);
+                    }
+                    next_expected_id++;
+
+                    shm->msgs[index].readers_left--;
+                    if (shm->msgs[index].readers_left <= 0){
+                        shm->msgs[index].is_free = 1; // mark as free
+                    }
+                    semop(semid, &unlock, 1);            // unlock semaphore
+                }else{
+                    semop(semid, &unlock, 1);            // unlock semaphore
+                    usleep(100000);                      // sleep before checking again
+                }
+            }
+        }else{  //  parent | writer
+
+        }
+
 
     }
     return 0;
