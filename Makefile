@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -g
 
-TARGET = message_app
+TARGET = message
 
 # Default rule
 all: $(TARGET)

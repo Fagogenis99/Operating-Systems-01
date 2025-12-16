@@ -143,6 +143,7 @@ int main(int argc, char *argv[]){
                             printf("Exiting dialog %d.\n", dialog_id);
                             kill(getppid(), SIGTERM); // terminate parent process
                         }
+                        exit(0);
                     }
                     next_expected_id++;
 
