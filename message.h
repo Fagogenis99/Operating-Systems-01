@@ -11,6 +11,7 @@
 #include <sys/sem.h>
 #include <signal.h>
 #include <time.h>
+#include <sys/wait.h>
 
 #define SHM_KEY 2100199     // shared memory key
 #define MAX_MSGS 200        // max number of messages

@@ -14,7 +14,6 @@ int main(int argc, char *argv[]){
         perror("shmget failed");
         exit(1);
     }
-    return 0;
 
     // attach to the shared memory segment
     void *shm_ptr = shmat(shmid, NULL, 0);
@@ -53,7 +52,8 @@ int main(int argc, char *argv[]){
             shm->msgs[i].is_free = 1; // mark all message slots as free
             shm->msgs[i].readers_left = 0;
         }
-    }else{
+    }
+    if (1){  // always true 
         struct sembuf lock = {0, -1, 0};   // Wait/Lock (-1)
         struct sembuf unlock = {0, 1, 0};  // Signal/Unlock (+1)
 
@@ -158,7 +158,7 @@ int main(int argc, char *argv[]){
             while(1){
                 if (fgets(input, TEXT_SIZE, stdin) == NULL) {
                     printf("\nError reading input. Exiting.\n");
-                    strcmp(input, "TERMINATE");
+                    strcpy(input, "TERMINATE");
                 }else{
                     input[strcspn(input, "\n")] = 0;    // remove newline
                 }
@@ -188,14 +188,16 @@ int main(int argc, char *argv[]){
                 shm->msgs[free_slot].id = shm->latest_message_id;
                 shm->msgs[free_slot].dialog_id = dialog_id;
                 shm->msgs[free_slot].sender_pid = getpid();
-                strncpy(shm->msgs[free_slot].text, input);
+                strcpy(shm->msgs[free_slot].text, input);
                 shm->msgs[free_slot].is_free = 0;
 
                 int readers=shm->dialogs[dialog_index].user_count - 1; // all except sender
-                shm->msgs[free_slot].readers_left = readers;
-                //
+                shm->msgs[free_slot].readers_left = (readers > 0) ? readers : 0;
 
-                //
+                if ((shm->msgs[free_slot].readers_left == 0) && (strcmp(input, "TERMINATE") != 0)) {
+                    shm->msgs[free_slot].is_free = 1; // mark as free if no readers
+                }
+                
                 semop(semid, &unlock, 1);            // unlock semaphore
                 if (strcmp(input, "TERMINATE") == 0) {
                     wait(NULL);                      // wait for child to finish
