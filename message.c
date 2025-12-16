@@ -125,7 +125,12 @@ int main(int argc, char *argv[]){
                 }
                 if (index!=-1){ // if found
                     if (shm->msgs[index].sender_pid != getppid()) {
-                        printf("\nFrom Dialog %d: %s\n", dialog_id, shm->msgs[index].text);
+                        printf("\r------------------------------------------------------\n");
+                        printf("- [Dialog %d] Incoming: %s\n", dialog_id, shm->msgs[index].text);
+                        printf("------------------------------------------------------\n");
+                        // printf("\nFrom Dialog %d: %s\n", dialog_id, shm->msgs[index].text);
+                        printf("Enter message for Dialog %d (or TERMINATE to exit): ", dialog_id);
+                        fflush(stdout);
                     }
 
                     shm->msgs[index].readers_left--;
@@ -183,7 +188,7 @@ int main(int argc, char *argv[]){
                     }
                 }
                 if (free_slot==-1){
-                    printf("No free message slots available. Message not sent.\n");
+                    printf("\nNo free message slots available. Message not sent.\n");
                     semop(semid, &unlock, 1);            // unlock semaphore
                     sleep(1);
                     continue;
