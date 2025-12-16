@@ -17,7 +17,7 @@ int main(int argc, char *argv[]){
 
     // attach to the shared memory segment
     void *shm_ptr = shmat(shmid, NULL, 0);
-    if (shm_ptr == (void *)-1) {
+    if (shm_ptr == (void *)-1){
         perror("shmat failed");
         exit(1);
     }
@@ -43,9 +43,9 @@ int main(int argc, char *argv[]){
         }
         // clean everything
         shm->latest_message_id = 0;
-        shm->total_users = 0; 
+        shm->total_users = 0;
         for(int i=0; i<MAX_DIALOGS; i++){
-            shm->dialogs[i].id = 0;   // mark all dialog slots as free
+            shm->dialogs[i].is_free = 1;   // mark all dialog slots as free
             shm->dialogs[i].user_count = 0;
         }
         for(int i=0;i<MAX_MSGS;i++){
@@ -66,18 +66,18 @@ int main(int argc, char *argv[]){
         // check if dialog exists
         int dialog_index = -1;
         for(int i=0; i<MAX_DIALOGS; i++){
-            if(shm->dialogs[i].id == dialog_id){ // check if dialog exists
+            if((shm->dialogs[i].id == dialog_id) && (shm->dialogs[i].is_free==0)){ // check if dialog exists
                 dialog_index = i;
                 break;
             }
         }
-
         if (dialog_index==-1){ // if dialog does not exist, create it
             for (int i=0; i<MAX_DIALOGS; i++){
-                if (shm->dialogs[i].id==0){ // find free slot
+                if (shm->dialogs[i].is_free){ // find free slot
                     shm->dialogs[i].id = dialog_id;
                     // shm->dialogs[i].user_count = 1;
                     dialog_index = i;
+                    shm->dialogs[i].is_free = 0; // mark as occupied
                     printf("Created new dialog with ID %d\n", dialog_id);
                     break;
                 }
@@ -101,7 +101,6 @@ int main(int argc, char *argv[]){
             perror("semop unlock failed");
             exit(1);
         }
-
         //fork 
         pid_t pid=fork();
         if (pid<0){

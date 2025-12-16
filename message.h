@@ -31,6 +31,7 @@ struct Message {
 struct Dialog {
     int id;                 // dialog room id
     int user_count;         // users in the room
+    int is_free;            // 1 if free, 0 if occupied
 };
 
 struct SharedMemory {
