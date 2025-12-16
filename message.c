@@ -183,6 +183,24 @@ int main(int argc, char *argv[]){
                     sleep(1);
                     continue;
                 }
+                // write message to shared memory
+                shm->latest_message_id++;
+                shm->msgs[free_slot].id = shm->latest_message_id;
+                shm->msgs[free_slot].dialog_id = dialog_id;
+                shm->msgs[free_slot].sender_pid = getpid();
+                strncpy(shm->msgs[free_slot].text, input);
+                shm->msgs[free_slot].is_free = 0;
+
+                int readers=shm->dialogs[dialog_index].user_count - 1; // all except sender
+                shm->msgs[free_slot].readers_left = readers;
+                //
+
+                //
+                semop(semid, &unlock, 1);            // unlock semaphore
+                if (strcmp(input, "TERMINATE") == 0) {
+                    wait(NULL);                      // wait for child to finish
+                    printf("Exiting dialog %d.\n", dialog_id);
+                    break;
             }
         }
     }

@@ -32,9 +32,9 @@ struct Dialog {
 };
 
 struct SharedMemory {
-    int latest_message_id;              // id of the latest message
-    struct Dialog dialogs[MAX_DIALOGS]; // all dialogs
-    struct Message msgs[MAX_MSGS];      // all messages
+    int latest_message_id;               // id of the latest message
+    struct Dialog dialogs[MAX_DIALOGS];  // all dialogs
+    struct Message msgs[MAX_MSGS];       // all messages
 };
 
 union semun {
