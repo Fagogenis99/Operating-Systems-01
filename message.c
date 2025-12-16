@@ -42,11 +42,13 @@ int main(int argc, char *argv[]){
             exit(1);
         }
         // clean everything
-        shm->latest_message_id = 0;
+        // shm->latest_message_id = 0;
         shm->total_users = 0;
         for(int i=0; i<MAX_DIALOGS; i++){
+            shm->dialogs[i].id = 0;
             shm->dialogs[i].is_free = 1;   // mark all dialog slots as free
             shm->dialogs[i].user_count = 0;
+            shm->dialogs[i].latest_message_id = 0;
         }
         for(int i=0;i<MAX_MSGS;i++){
             shm->msgs[i].is_free = 1; // mark all message slots as free
@@ -95,7 +97,7 @@ int main(int argc, char *argv[]){
         shm->total_users++;
         printf("Joined dialog %d. Users in dialog: %d. Total users: %d\n", dialog_id, shm->dialogs[dialog_index].user_count, shm->total_users);
         
-        int next_expected_id = shm->latest_message_id + 1; // next message id to read
+        int next_expected_id = shm->dialogs[dialog_index].latest_message_id + 1; // next message id to read
         // unlock semaphore
         if(semop(semid, &unlock, 1)==-1){
             perror("semop unlock failed");
@@ -110,7 +112,7 @@ int main(int argc, char *argv[]){
         if (pid==0){ //  child | reader
             while(1){
                 if (semop(semid, &lock, 1)==-1){ // lock semaphore
-                    perror("semop lock failed");
+                    perror("\nsemop lock failed");
                     exit(1);
                 }
 
@@ -123,7 +125,7 @@ int main(int argc, char *argv[]){
                 }
                 if (index!=-1){ // if found
                     if (shm->msgs[index].sender_pid != getppid()) {
-                        printf("Dialog %d: %s\n", dialog_id, shm->msgs[index].text);
+                        printf("\nFrom Dialog %d: %s\n", dialog_id, shm->msgs[index].text);
                     }
 
                     shm->msgs[index].readers_left--;
@@ -135,11 +137,11 @@ int main(int argc, char *argv[]){
                         if (shm->dialogs[dialog_index].user_count <= 0) { // if no users left, close dialog
                             shm->dialogs[dialog_index].id = 0; 
                             shm->dialogs[dialog_index].user_count = 0;
-                            printf("Dialog %d is now empty and terminated.\n", dialog_id);
+                            printf("\nDialog %d is now empty and terminated.\n", dialog_id);
                         }
                         semop(semid, &unlock, 1);            // unlock before exiting
                         if(shm->msgs[index].sender_pid!=getppid()){
-                            printf("Exiting dialog %d.\n", dialog_id);
+                            printf("\nExiting dialog %d.\n", dialog_id);
                             kill(getppid(), SIGTERM); // terminate parent process
                         }
                         exit(0);
@@ -158,6 +160,7 @@ int main(int argc, char *argv[]){
         }else{ //  parent | writer
             char input[TEXT_SIZE];
             while(1){
+                printf("Enter message for Dialog %d (or TERMINATE to exit): ", dialog_id);
                 if (fgets(input, TEXT_SIZE, stdin) == NULL) {
                     printf("\nError reading input. Exiting.\n");
                     strcpy(input, "TERMINATE");
@@ -167,6 +170,7 @@ int main(int argc, char *argv[]){
                 if(input[0]=='\0'){
                     continue;                           // ignore empty messages
                 }
+                printf("\n");
                 if(semop(semid, &lock, 1)==-1){         // lock semaphore
                     perror("semop lock failed");
                     exit(1);
@@ -178,7 +182,6 @@ int main(int argc, char *argv[]){
                         break;
                     }
                 }
-
                 if (free_slot==-1){
                     printf("No free message slots available. Message not sent.\n");
                     semop(semid, &unlock, 1);            // unlock semaphore
@@ -186,8 +189,8 @@ int main(int argc, char *argv[]){
                     continue;
                 }
                 // write message to shared memory
-                shm->latest_message_id++;
-                shm->msgs[free_slot].id = shm->latest_message_id;
+                shm->dialogs[dialog_index].latest_message_id++;
+                shm->msgs[free_slot].id = shm->dialogs[dialog_index].latest_message_id;
                 shm->msgs[free_slot].dialog_id = dialog_id;
                 shm->msgs[free_slot].sender_pid = getpid();
                 strcpy(shm->msgs[free_slot].text, input);

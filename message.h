@@ -32,10 +32,11 @@ struct Dialog {
     int id;                 // dialog room id
     int user_count;         // users in the room
     int is_free;            // 1 if free, 0 if occupied
+    int latest_message_id;  // id of the latest message
 };
 
 struct SharedMemory {
-    int latest_message_id;               // id of the latest message
+    // int latest_message_id;               // id of the latest message
     struct Dialog dialogs[MAX_DIALOGS];  // all dialogs
     struct Message msgs[MAX_MSGS];       // all messages
     int total_users;                     // total users in the system
