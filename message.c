@@ -136,11 +136,13 @@ int main(int argc, char *argv[]){
                         if (shm->dialogs[dialog_index].user_count <= 0) { // if no users left, close dialog
                             shm->dialogs[dialog_index].id = 0; 
                             shm->dialogs[dialog_index].user_count = 0;
-                            printf("Dialog %d is now empty and terminated.\n", current_dialog_id);
+                            printf("Dialog %d is now empty and terminated.\n", dialog_id);
                         }
                         semop(semid, &unlock, 1);            // unlock before exiting
-                        kill(getppid(), SIGKILL);
-                        exit(0);
+                        if(shm->msgs[index].sender_pid!=getppid()){
+                            printf("Exiting dialog %d.\n", dialog_id);
+                            kill(getppid(), SIGTERM); // terminate parent process
+                        }
                     }
                     next_expected_id++;
 
@@ -191,7 +193,7 @@ int main(int argc, char *argv[]){
                 strcpy(shm->msgs[free_slot].text, input);
                 shm->msgs[free_slot].is_free = 0;
 
-                int readers=shm->dialogs[dialog_index].user_count - 1; // all except sender
+                int readers=shm->dialogs[dialog_index].user_count; 
                 shm->msgs[free_slot].readers_left = (readers > 0) ? readers : 0;
 
                 if ((shm->msgs[free_slot].readers_left == 0) && (strcmp(input, "TERMINATE") != 0)) {
@@ -203,8 +205,10 @@ int main(int argc, char *argv[]){
                     wait(NULL);                      // wait for child to finish
                     printf("Exiting dialog %d.\n", dialog_id);
                     break;
+                }
             }
         }
+    
     }
     return 0;
 }

@@ -9,9 +9,10 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/sem.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include <time.h>
-#include <sys/wait.h>
+
 
 #define SHM_KEY 2100199     // shared memory key
 #define MAX_MSGS 200        // max number of messages
@@ -36,6 +37,7 @@ struct SharedMemory {
     int latest_message_id;               // id of the latest message
     struct Dialog dialogs[MAX_DIALOGS];  // all dialogs
     struct Message msgs[MAX_MSGS];       // all messages
+    int total_users;                     // total users in the system
 };
 
 union semun {
