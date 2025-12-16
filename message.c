@@ -156,15 +156,35 @@ int main(int argc, char *argv[]){
         }else{ //  parent | writer
             char input[TEXT_SIZE];
             while(1){
+                if (fgets(input, TEXT_SIZE, stdin) == NULL) {
+                    printf("\nError reading input. Exiting.\n");
+                    strcmp(input, "TERMINATE");
+                }else{
+                    input[strcspn(input, "\n")] = 0;    // remove newline
+                }
+                if(input[0]=='\0'){
+                    continue;                           // ignore empty messages
+                }
+                if(semop(semid, &lock, 1)==-1){         // lock semaphore
+                    perror("semop lock failed");
+                    exit(1);
+                }
+                int free_slot=-1;
+                for(int i=0; i<MAX_MSGS; i++){          // find free message slot
+                    if(shm->msgs[i].is_free==1){
+                        free_slot=i;
+                        break;
+                    }
+                }
 
-
-                
+                if (free_slot==-1){
+                    printf("No free message slots available. Message not sent.\n");
+                    semop(semid, &unlock, 1);            // unlock semaphore
+                    sleep(1);
+                    continue;
+                }
             }
-
-
         }
-
-
     }
     return 0;
 }
