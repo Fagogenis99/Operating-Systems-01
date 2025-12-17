@@ -143,6 +143,8 @@ int main(int argc, char *argv[]){
                             shm->dialogs[dialog_index].id = 0; 
                             shm->dialogs[dialog_index].user_count = 0;
                             printf("\nDialog %d is now empty and terminated.\n", dialog_id);
+                            shm->dialogs[dialog_index].is_free=1; // mark dialog slot as free
+                            shm->dialogs[dialog_index].latest_message_id=0;
                         }
                         semop(semid, &unlock, 1);            // unlock before exiting
                         if(shm->msgs[index].sender_pid!=getppid()){
